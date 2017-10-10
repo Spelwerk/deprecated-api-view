@@ -40,10 +40,10 @@ async.series([
     }
 ], function(err) {
     if (err) {
-        console.error('[APP] Initialization failed', err);
-        logger.error('[APP] Initialization failed', err);
+        console.error('[APP] [VM] Initialization failed', err);
+        logger.error('[APP] [VM] Initialization failed', err);
     } else {
-        console.info('[APP] Initialized successfully in ' + environment + ' environment');
-        logger.info('[APP] Initialized successfully in ' + environment + ' environment');
+        console.info('[APP] [VM] Initialized successfully in ' + environment + ' environment');
+        logger.info('[APP] [VM] Initialized successfully in ' + environment + ' environment');
     }
 });
