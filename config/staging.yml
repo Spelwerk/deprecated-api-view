@@ -1,0 +1,7 @@
+port: 5000
+
+api-key:
+  id:
+  secret:
+
+crud-uri:
