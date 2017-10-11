@@ -42,7 +42,7 @@ function start(callback) {
             logger.info('[SERVER] Initializing key authorization');
 
             // API-Key Authorization handler
-            require('./auth')(app, callback);
+            require('./key')(app, callback);
         },
         function(callback) {
             logger.info('[SERVER] Initializing enabled routes');

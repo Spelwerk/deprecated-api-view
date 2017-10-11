@@ -4,6 +4,4 @@ api-key:
   id: id
   secret: secret
 
-crud-uri-list:
-  - http://localhost:4000
-  - http://localhost:4000
+crud-uri: http://localhost:4000
