@@ -18,7 +18,19 @@ module.exports = function(router) {
     router.get("/:id", function(req, res, next) {
         let idRoute = route + "/" + req.params.id;
 
-        let creature = {};
+        let creature = {
+            creature: null,
+            permissions: null,
+            labels: null,
+            comments: null,
+            corporation: null,
+            country: null,
+            identity: null,
+            nature: null,
+            wealth: null,
+            bionics: null,
+            weapons: null
+        };
 
         async.series([
             // Creature
@@ -38,7 +50,7 @@ module.exports = function(router) {
                 request(req, newRoute, function(err, stat, body) {
                     if(err) return callback(err);
 
-                    creature["permissions"] = body.results;
+                    creature.permissions = body;
 
                     callback();
                 });
@@ -50,7 +62,7 @@ module.exports = function(router) {
                 request(req, newRoute, function(err, stat, body) {
                     if(err) return callback(err);
 
-                    creature["labels"] = body.results;
+                    creature.labels = body.results;
 
                     callback();
                 });
@@ -62,19 +74,97 @@ module.exports = function(router) {
                 request(req, newRoute, function(err, stat, body) {
                     if(err) return callback(err);
 
-                    creature["comments"] = body.results;
+                    creature.comments = body.results;
 
                     callback();
                 });
             },
-            // Relations
+            // Corporation
+            function(callback) {
+                if(!creature.creature.corporation_id) return callback();
+
+                let newRoute = "/corporations/" + creature.creature.corporation_id;
+
+                request(req, newRoute, function(err, stat, body) {
+                    if(err) return callback(err);
+
+                    creature.corporation = body.result;
+
+                    callback();
+                });
+
+                callback();
+            },
+            // Country
+            function(callback) {
+                if(!creature.creature.country_id) return callback();
+
+                let newRoute = "/countries/" + creature.creature.country_id;
+
+                request(req, newRoute, function(err, stat, body) {
+                    if(err) return callback(err);
+
+                    creature.country = body.result;
+
+                    callback();
+                });
+
+                callback();
+            },
+            // Identity
+            function(callback) {
+                if(!creature.creature.identity_id) return callback();
+
+                let newRoute = "/identities/" + creature.creature.identity_id;
+
+                request(req, newRoute, function(err, stat, body) {
+                    if(err) return callback(err);
+
+                    creature.identity = body.result;
+
+                    callback();
+                });
+
+                callback();
+            },
+            // Nature
+            function(callback) {
+                if(!creature.creature.nature_id) return callback();
+
+                let newRoute = "/natures/" + creature.creature.nature_id;
+
+                request(req, newRoute, function(err, stat, body) {
+                    if(err) return callback(err);
+
+                    creature.nature = body.result;
+
+                    callback();
+                });
+
+                callback();
+            },
+            // Wealth
+            function(callback) {
+                if(!creature.creature.wealth_id) return callback();
+
+                let newRoute = "/wealth/" + creature.creature.wealth_id;
+
+                request(req, newRoute, function(err, stat, body) {
+                    if(err) return callback(err);
+
+                    creature.wealth = body.result;
+
+                    callback();
+                });
+
+                callback();
+            },
+            // Relations (creature_has_*)
             function(callback) {
                 let routesArray = [
                     "assets",
                     "attributes",
-                    "augmentations",
                     "backgrounds",
-                    "bionics",
                     "doctrines",
                     "expertises",
                     "gifts",
@@ -107,6 +197,35 @@ module.exports = function(router) {
                     callback(err);
                 });
             },
+            // Bionics
+            function(callback) {
+                let newRoute = idRoute + "/bionics";
+
+                request(req, newRoute, function(err, stat, body) {
+                    if(err) return callback(err);
+
+                    let bionics = body.results;
+
+                    async.each(bionics, function(bionicObject, next) {
+                        let augRoute = newRoute + "/" + bionicObject.id + "/augmentations";
+
+                        request(req, augRoute, function(err, stat, body) {
+                            if(err) return next(err);
+
+                            bionicObject.augmentations = body.results;
+
+                            next();
+                        });
+                    }, function(err) {
+                        if(err) return callback(err);
+
+                        creature.bionics = bionics;
+
+                        callback();
+                    });
+                });
+            },
+            // Weapons
             function(callback) {
                 let newRoute = idRoute + "/weapons";
 
@@ -121,14 +240,14 @@ module.exports = function(router) {
                         request(req, modRoute, function(err, stat, body) {
                             if(err) return next(err);
 
-                            weaponObject["mods"] = body.results;
+                            weaponObject.mods = body.results;
 
                             next();
                         });
                     }, function(err) {
                         if(err) return callback(err);
 
-                        creature["weapons"] = weapons;
+                        creature.weapons = weapons;
 
                         callback();
                     });
