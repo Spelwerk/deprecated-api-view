@@ -177,6 +177,7 @@ module.exports.id = function(req, callback) {
                 "primals",
                 "protection",
                 //"relations",
+                "shields",
                 "skills",
                 "species",
                 "spells",
