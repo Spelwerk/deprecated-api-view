@@ -5,6 +5,29 @@ let async = require('async'),
 
 const route = '/creatures';
 
+const routesArray = [
+    "armours",
+    "assets",
+    "attributes",
+    "backgrounds",
+    "expertises",
+    "forms",
+    "gifts",
+    "imperfections",
+    "languages",
+    "loyalties",
+    "milestones",
+    "primals",
+    "shields",
+    "skills",
+    "species",
+    "spells",
+    "software",
+    "dementations",
+    "diseases",
+    "traumas"
+];
+
 module.exports.root = function(req, callback) {
     request(req, route, callback);
 };
@@ -24,7 +47,8 @@ module.exports.id = function(req, callback) {
         labels: null,
         comments: null,
         bionics: null,
-        weapons: null
+        weapons: null,
+        manifestations: null
     };
 
     async.series([
@@ -38,6 +62,7 @@ module.exports.id = function(req, callback) {
                 callback();
             });
         },
+
         // Permissions
         function(callback) {
             if(!req.headers["x-user-token"]) return callback();
@@ -52,6 +77,7 @@ module.exports.id = function(req, callback) {
                 callback();
             });
         },
+
         // Labels
         function(callback) {
             let newRoute = idRoute + "/labels";
@@ -64,6 +90,7 @@ module.exports.id = function(req, callback) {
                 callback();
             });
         },
+
         // Comments
         function(callback) {
             let newRoute = idRoute + "/comments";
@@ -76,6 +103,7 @@ module.exports.id = function(req, callback) {
                 callback();
             });
         },
+
         // World
         function(callback) {
             let newRoute = idRoute + "/world";
@@ -90,6 +118,7 @@ module.exports.id = function(req, callback) {
 
             callback();
         },
+
         // Corporation
         function(callback) {
             let newRoute = idRoute + "/corporation";
@@ -104,6 +133,7 @@ module.exports.id = function(req, callback) {
 
             callback();
         },
+
         // Country
         function(callback) {
             let newRoute = idRoute + "/country";
@@ -118,6 +148,7 @@ module.exports.id = function(req, callback) {
 
             callback();
         },
+
         // Identity
         function(callback) {
             let newRoute = idRoute + "/identity";
@@ -132,6 +163,46 @@ module.exports.id = function(req, callback) {
 
             callback();
         },
+
+        // Manifestation
+        function(callback) {
+            let route = idRoute + "/manifestations";
+
+            request(req, route, function(err, body) {
+                if(err) return callback(err);
+
+                if(body.results.length === 0) return callback();
+
+                creature.manifestations = [];
+
+                let array = body.results;
+
+                for(let i in array) {
+                    let manifestation = array[i];
+
+                    let object = {id: null, name: null, description: null, icon: null, focus: {}};
+
+                    for(let key in manifestation) {
+                        if(key.indexOf("focus_") !== -1) continue;
+
+                        object[key] = manifestation[key];
+                    }
+
+                    for(let key in manifestation) {
+                        if(key.indexOf("focus_") === -1) continue;
+
+                        let newKey = key.split("focus_")[1];
+
+                        object.focus[newKey] = manifestation[key];
+                    }
+
+                    creature.manifestations.push(object);
+                }
+
+                callback();
+            });
+        },
+
         // Nature
         function(callback) {
             let newRoute = idRoute + "/nature";
@@ -146,6 +217,7 @@ module.exports.id = function(req, callback) {
 
             callback();
         },
+
         // Wealth
         function(callback) {
             let newRoute = idRoute + "/wealth";
@@ -160,63 +232,23 @@ module.exports.id = function(req, callback) {
 
             callback();
         },
-        // Relations (creature_has_*)
-        function(callback) {
-            let routesArray = [
-                "assets",
-                "attributes",
-                "backgrounds",
-                "expertises",
-                "forms",
-                "gifts",
-                "imperfections",
-                "languages",
-                "loyalties",
-                "manifestations",
-                "milestones",
-                "primals",
-                "protection",
-                //"relations",
-                "shields",
-                "skills",
-                "species",
-                "spells",
-                "software",
-                "dementations",
-                "diseases",
-                "traumas"
-            ];
 
-            async.each(routesArray, function(routeName, next) {
-                let newRoute = idRoute + "/" + routeName;
-
-                request(req, newRoute, function(err, body) {
-                    if(err) return next(err);
-
-                    creature[routeName] = body.results;
-
-                    next();
-                });
-            }, function(err) {
-                callback(err);
-            });
-        },
         // Bionics
         function(callback) {
-            let newRoute = idRoute + "/bionics";
+            let route = idRoute + "/bionics";
 
-            request(req, newRoute, function(err, body) {
+            request(req, route, function(err, body) {
                 if(err) return callback(err);
 
                 let bionics = body.results;
 
-                async.each(bionics, function(bionicObject, next) {
-                    let augRoute = newRoute + "/" + bionicObject.id + "/augmentations";
+                async.each(bionics, function(bionic, next) {
+                    let eachRoute = route + "/" + bionic.id + "/augmentations";
 
-                    request(req, augRoute, function(err, body) {
+                    request(req, eachRoute, function(err, body) {
                         if(err) return next(err);
 
-                        bionicObject.augmentations = body.results;
+                        bionic.augmentations = body.results;
 
                         next();
                     });
@@ -229,22 +261,23 @@ module.exports.id = function(req, callback) {
                 });
             });
         },
+
         // Weapons
         function(callback) {
-            let newRoute = idRoute + "/weapons";
+            let route = idRoute + "/weapons";
 
-            request(req, newRoute, function(err, body) {
+            request(req, route, function(err, body) {
                 if(err) return callback(err);
 
                 let weapons = body.results;
 
-                async.each(weapons, function(weaponObject, next) {
-                    let modRoute = newRoute + "/" + weaponObject.id + "/mods";
+                async.each(weapons, function(weapon, next) {
+                    let modRoute = route + "/" + weapon.id + "/mods";
 
                     request(req, modRoute, function(err, body) {
                         if(err) return next(err);
 
-                        weaponObject.mods = body.results;
+                        weapon.mods = body.results;
 
                         next();
                     });
@@ -255,6 +288,23 @@ module.exports.id = function(req, callback) {
 
                     callback();
                 });
+            });
+        },
+
+        // Other
+        function(callback) {
+            async.each(routesArray, function(routeName, next) {
+                let route = idRoute + "/" + routeName;
+
+                request(req, route, function(err, body) {
+                    if(err) return next(err);
+
+                    creature[routeName] = body.results;
+
+                    next();
+                });
+            }, function(err) {
+                callback(err);
             });
         }
     ], function(err) {
