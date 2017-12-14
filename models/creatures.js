@@ -33,7 +33,7 @@ module.exports.root = function(req, callback) {
 };
 
 module.exports.id = function(req, callback) {
-    let idRoute = route + "/" + req.params.id;
+    let idRoute = route + '/' + req.params.id;
 
     let creature = {
         creature: null,

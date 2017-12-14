@@ -5,8 +5,7 @@
   "description": "View Model API server for spelwerk to connect to CRUD API and deliver all information to frontend via JSON",
   "author": "Jonn Nilsson <jonn@spelwerk.se>",
   "scripts": {
-    "install": "node ./installation/install.js",
-    "start": "nodemon ./index.js",
+    "start": "nodemon ./server.js",
     "test": "mocha ./test/index.js"
   },
   "main": "index.js",
@@ -34,6 +33,7 @@
     "node-yaml": "^3.1.1",
     "path": "^0.12.7",
     "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
     "supertest": "^3.0.0",
     "underscore": "^1.8.3",
     "uuid": "^3.1.0",

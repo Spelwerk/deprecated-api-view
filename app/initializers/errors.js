@@ -1,18 +1,28 @@
 'use strict';
 
-let logger = require(appRoot + '/lib/logger');
+const logger = require(appRoot + '/lib/logger');
 
-module.exports = function(app, callback) {
-    // Return error information as response
-    app.use(function(err, req, res, next) {
-        req.log.error = err;
+async function setup(app) {
+    logger.info('[ERRORS] Initializing');
 
-        logger.error(req.log);
+    try {
+        app.use(function(err, req, res, next) {
+            let status = err.status || 500,
+                title = err.title || 'Error',
+                message = err.message || 'Message',
+                details = err.details || 'Details';
 
-        if(environment !== 'production') console.error(req.log);
+            req.log.error = err;
 
-        res.status(err.status).send({title: err.title, message: err.message});
-    });
+            logger.error(req.log);
 
-    callback();
-};
+            if(environment !== 'production') console.error(req.log);
+
+            res.status(status).send({title: title, message: message, details: details});
+        });
+    } catch(e) {
+        throw e;
+    }
+}
+
+module.exports = setup;
