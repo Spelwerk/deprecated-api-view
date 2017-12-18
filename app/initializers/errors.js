@@ -7,10 +7,7 @@ async function setup(app) {
 
     try {
         app.use(function(err, req, res, next) {
-            let status = err.status || 500,
-                title = err.title || 'Error',
-                message = err.message || 'Message',
-                details = err.details || 'Details';
+            let status = err.status || 500;
 
             req.log.error = err;
 
@@ -18,7 +15,7 @@ async function setup(app) {
 
             if(environment !== 'production') console.error(req.log);
 
-            res.status(status).send({title: title, message: message, details: details});
+            res.status(status).send(err);
         });
     } catch(e) {
         throw e;
