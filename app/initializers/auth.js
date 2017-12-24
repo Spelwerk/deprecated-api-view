@@ -2,7 +2,7 @@
 
 const nconf = require('nconf');
 const basicAuth = require('basic-auth');
-const logger = require(appRoot + '/lib/logger');
+const logger = require('../../lib/logger');
 
 async function setup(app) {
     logger.info('[AUTH] Initializing');

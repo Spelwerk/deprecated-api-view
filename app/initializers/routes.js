@@ -4,14 +4,13 @@ const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-
 const readDir = util.promisify(fs.readdir);
-const logger = require(appRoot + '/lib/logger');
-const folder = appRoot + '/app/routes';
+const logger = require('../../lib/logger');
 
-async function setup(app) {
+module.exports = async (app) => {
     logger.info('[ROUTES] Initializing');
 
+    const folder = appRoot + '/app/routes';
     const files = await readDir(folder);
 
     for(let i in files) {
@@ -32,6 +31,4 @@ async function setup(app) {
             throw e;
         }
     }
-}
-
-module.exports = setup;
+};
