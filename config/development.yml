@@ -1,0 +1,7 @@
+port: 5000
+
+api-key:
+  id: id
+  secret: secret
+
+crud-uri: http://localhost:4000

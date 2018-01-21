@@ -1,6 +1,6 @@
 {
   "name": "spelwerk-api-view",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "private": true,
   "description": "View Model API server for spelwerk to connect to CRUD API and deliver all information to frontend via JSON",
   "author": "Jonn Nilsson <jonn@spelwerk.se>",

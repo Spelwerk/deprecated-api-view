@@ -4,24 +4,26 @@ const model = require('../../models/armours');
 
 module.exports = (router) => {
 
-    router.get('/', async (req, res, next) => {
-        try {
-            let data = await model.root(req);
+    router.route('/')
+        .get(async (req, res, next) => {
+            try {
+                let data = await model.list(req);
 
-            res.status(200).send(data);
-        } catch(e) {
-            next(e);
-        }
-    });
+                res.status(200).send(data);
+            } catch(e) {
+                next(e);
+            }
+        });
 
-    router.get('/:id', async (req, res, next) => {
-        try {
-            let data = await model.id(req, req.params.id);
+    router.route('/:id')
+        .get(async (req, res, next) => {
+            try {
+                let data = await model.id(req, req.params.id);
 
-            res.status(200).send(data);
-        } catch(e) {
-            next(e);
-        }
-    });
+                res.status(200).send(data);
+            } catch(e) {
+                next(e);
+            }
+        });
 
 };

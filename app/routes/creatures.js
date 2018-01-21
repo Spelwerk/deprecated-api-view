@@ -4,20 +4,26 @@ const model = require('../../models/creatures');
 
 module.exports = function(router) {
 
-    router.get("/", function(req, res, next) {
-        model.root(req, function(err, creatures) {
-            if(err) return next(err);
+    router.route('/')
+        .get(async (req, res, next) => {
+            try {
+                let data = await model.list(req);
 
-            res.status(200).send(creatures);
-        })
-    });
-
-    router.get("/:id", function(req, res, next) {
-        model.id(req, function(err, creature) {
-            if(err) return next(err);
-
-            res.status(200).send(creature);
+                res.status(200).send(data);
+            } catch(e) {
+                next(e);
+            }
         });
-    });
+
+    router.route('/:id')
+        .get(async (req, res, next) => {
+            try {
+                let data = await model.id(req, req.params.id);
+
+                res.status(200).send(data);
+            } catch(e) {
+                next(e);
+            }
+        });
 
 };

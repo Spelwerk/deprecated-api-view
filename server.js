@@ -16,12 +16,14 @@ async function main() {
     const app = express();
 
     try {
-        require('./app/initializers/nconf')();
+        require('./app/initializers/nconf');
 
         logger.info('[SERVER] Configuring Body Parser');
 
         app.use(bodyParser.urlencoded({extended: true}));
         app.use(bodyParser.json());
+
+        logger.info('[SERVER] Configuring App with Initializers');
 
         require('./app/initializers/log')(app);
 
@@ -30,6 +32,7 @@ async function main() {
         require('./app/initializers/errors')(app);
 
         logger.info('[SERVER] Listening on port: ' + nconf.get('port'));
+
         app.listen(nconf.get('port'));
     } catch(e) {
         console.error(e);
@@ -37,7 +40,6 @@ async function main() {
     }
 
     logger.info('[SERVER] Initialized successfully in ' + environment + ' environment');
-
     console.info('[VIEW MODEL] Initialized successfully in ' + environment + ' environment');
 }
 
