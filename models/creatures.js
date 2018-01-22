@@ -16,7 +16,7 @@ async function getCreatureWeapons(req, model) {
         let data = [];
 
         for(let i in model.weapons) {
-            let id = model.weapons[i].weapon_id;
+            let id = model.weapons[i].id;
             let result = await request.single(req, '/weapons/' + id);
 
             result.equipped = model.weapons[i].equipped;
@@ -79,11 +79,8 @@ async function getSpeciesWeapons(req, model) {
     try {
         let data = [];
 
-        for(let i in model.species) {
-            if(model.species[i].first === false) continue;
-
-            let id = model.species[i].id;
-            let results = await request.multiple(req, '/weapons/species/' + id);
+        if(model.species !== null) {
+            let results = await request.multiple(req, '/weapons/species/' + model.species.id);
 
             for(let k in results) {
                 results[k].equipped = true;
@@ -94,7 +91,6 @@ async function getSpeciesWeapons(req, model) {
         }
 
         return data;
-
     } catch(e) { return e; }
 }
 
@@ -175,10 +171,10 @@ async function getSpecies(req, route) {
     const relation = 'species';
 
     try {
-        let data = await request.multiple(req, route + '/' + relation);
+        let data = await request.single(req, route + '/' + relation);
 
-        for(let i in data) {
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
+        if(data !== null) {
+            data.attributes = await getValues(req, relation, data.id, 'attributes');
         }
 
         return data;
@@ -467,11 +463,6 @@ async function fixWeapons(req, route, model) {
         data = pushWeaponIntoData(data, manifestationWeapons);
         data = pushWeaponIntoData(data, speciesWeapons);
 
-        //console.log(creatureWeapons);
-        //console.log(augmentationWeapons);
-        //console.log(manifestationWeapons);
-        //console.log(speciesWeapons);
-
         for(let i in data) {
             // Create the Type object instead
             data[i].type = {
@@ -531,9 +522,72 @@ async function fixWeapons(req, route, model) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-function calculateAttributes(model) {
+function ensureExists(model) {
+    model.exists = {
+        identity: !!model.identity,
+        nature: !!model.nature,
+        wealth: !!model.wealth,
+        country: !!model.country,
+        corporation: !!model.corporation,
+        species: model.species.length > 0
+    };
+
+    return model;
+}
+
+function calculatePoints(model) {
+    model.points = {
+        background: model.backgrounds.length,
+        expertise: 0,
+        form: model.forms.length,
+        gift: model.gifts.length,
+        imperfection: model.imperfections.length,
+        language: model.languages.length,
+        milestone: model.milestones.length,
+        primal: 0,
+        skill: 0,
+        spell: 0
+    };
+
+    // Expertise Additive calculation
+    for(let i in model.expertises) {
+        let value = model.expertises[i].value;
+
+        for(let n = value; n > 0; n--) {
+            model.points.expertise += n;
+        }
+    }
+
+    // Primal Additive calculation
+    for(let i in model.primals) {
+        let value = model.primals[i].value;
+
+        for(let n = value; n > 0; n--) {
+            model.points.primal += n;
+        }
+    }
+
+    // Skill Additive calculation
+    for(let i in model.skills) {
+        let value = model.skills[i].value;
+
+        for(let n = value; n > 0; n--) {
+            model.points.skill += n;
+        }
+    }
+
+    // Spell calculation
+    for(let i in model.spells) {
+        model.points.spell += model.spells[i].cost;
+    }
+
+    return model;
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+function addAttributes(model) {
     const array = [
-        'species',
         'gifts',
         'imperfections',
         'backgrounds',
@@ -546,21 +600,49 @@ function calculateAttributes(model) {
         'weapons'
     ];
 
+    const equipable = [
+        'assets',
+        'armours',
+        'shields',
+        'weapons'
+    ];
+
     /*
     For each attribute in creature list,
-    loop through each of the relations in array,
-    then loop through all objects connected to that relation,
-    then loop through all attributes connected to that object,
-    then compare creature attribute with the object attribute and add values where appropriate
      */
 
     for(let i in model.attributes) {
         let id = model.attributes[i].id;
 
+        /*
+        Loop through all attributes in species
+         */
+
+        if(model.species !== null) {
+            for(let u in model.species.attributes) {
+                for(let o in model.species.attributes) {
+                    let attribute = model.species.attributes[o];
+
+                    if(id === attribute.id) {
+                        model.attributes[u].value += attribute.value;
+                    }
+                }
+            }
+        }
+
+        /*
+        Loop through each of the relations in array,
+        then loop through all objects connected to that relation,
+        then loop through all attributes connected to that object,
+        then compare creature attribute with the object attribute and add values where appropriate
+         */
+
         for(let k in array) {
             let relation = model[array[k]];
 
             for(let n in relation) {
+                if(equipable.indexOf(array[k]) !== -1 && relation[n].equipped === false) continue;
+
                 let attributes = relation[n].attributes;
 
                 for(let o in attributes) {
@@ -595,36 +677,21 @@ function calculateAttributes(model) {
                 }
             }
         }
-
-        /*
-        Species is different because it only adds on primary(first)
-         */
-
-        for(let x in model.species) {
-            if(model.species[x].first === false) continue;
-
-            let attributes = model.species[x].attributes;
-
-            for(let z in attributes) {
-                let attribute = attributes[z];
-
-                if(id === attribute.id) {
-                    model.attributes[i].value += attribute.value;
-                }
-            }
-        }
     }
 
     return model;
 }
 
-function calculateSkills(model) {
+function addSkills(model) {
     const array = [
         'gifts',
         'imperfections',
         'backgrounds',
         'milestones',
         'bionics',
+    ];
+
+    const equipable = [
         'assets',
         'armours',
         'shields',
@@ -646,6 +713,8 @@ function calculateSkills(model) {
             let relation = model[array[k]];
 
             for(let n in relation) {
+                if(equipable.indexOf(array[k]) !== -1 && relation[n].equipped === false) continue;
+
                 let skills = relation[n].skills;
 
                 for(let o in skills) {
@@ -685,10 +754,13 @@ function calculateSkills(model) {
     return model;
 }
 
-function calculatePrimals(model) {
+function addPrimals(model) {
     const array = [
         'backgrounds',
-        'milestones',
+        'milestones'
+    ];
+
+    const equipable = [
         'assets',
         'armours',
         'shields',
@@ -710,6 +782,8 @@ function calculatePrimals(model) {
             let relation = model[array[k]];
 
             for(let n in relation) {
+                if(equipable.indexOf(array[k]) !== -1 && relation[n].equipped === false) continue;
+
                 let primals = relation[n].primals;
 
                 for(let o in primals) {
@@ -743,12 +817,15 @@ async function id(req, id) {
         // Permission
         permissions: await getPermissions(req, route),
 
+        // Defining
+        identity: await request.single(req, route + '/identity'),
+        nature: await request.single(req, route + '/nature'),
+        species: await getSpecies(req, route),
+        wealth: await request.single(req, route + '/wealth'),
+
         // Single
         world: await request.single(req, route + '/world'),
         epoch: await request.single(req, route + '/epoch'),
-        identity: await request.single(req, route + '/identity'),
-        nature: await request.single(req, route + '/nature'),
-        wealth: await request.single(req, route + '/wealth'),
         country: await request.single(req, route + '/country'),
         corporation: await request.single(req, route + '/corporation'),
 
@@ -757,12 +834,12 @@ async function id(req, id) {
         skills: await request.multiple(req, route + '/skills'),
         expertises: await getExpertises(req, route),
 
-        species: await getSpecies(req, route),
         gifts: await getGifts(req, route),
         imperfections: await getImperfections(req, route),
         backgrounds: await getBackgrounds(req, route),
         milestones: await getMilestones(req, route),
         languages: await request.multiple(req, route + '/languages'),
+        currencies: await request.multiple(req, route + '/currencies'),
 
         manifestations: await getManifestations(req, route),
         primals: await request.multiple(req, route + '/primals'),
@@ -785,15 +862,21 @@ async function id(req, id) {
         diseases: await request.multiple(req, route + '/diseases'),
         traumas: await request.multiple(req, route + '/traumas'),
 
+        exists: {},
+        points: {},
+
         labels: await request.multiple(req, route + '/labels'),
         comments: await request.multiple(req, route + '/comments')
     };
 
+    model = ensureExists(model);
+    model = calculatePoints(model);
+
     model.weapons = await fixWeapons(req, route, model);
 
-    model = calculateAttributes(model);
-    model = calculateSkills(model);
-    model = calculatePrimals(model);
+    model = addAttributes(model);
+    model = addSkills(model);
+    model = addPrimals(model);
 
     return model;
 }
