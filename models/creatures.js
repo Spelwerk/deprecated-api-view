@@ -7,6 +7,30 @@ const root = '/creatures';
 // PRIVATE
 // ////////////////////////////////////////////////////////////////////////////////// //
 
+function FLOOR(number, floor) {
+    number = parseInt(number) || floor;
+    number = number < floor
+        ? floor
+        : number;
+
+    return number;
+}
+
+function ROOF(number, roof) {
+    number = parseInt(number) || roof;
+    number = number > roof
+        ? roof
+        : number;
+
+    return number;
+}
+
+function MINMAX(number, floor, roof) {
+    return ROOF(FLOOR(number, floor), roof);
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 async function getValues(req, relation, id, extra) {
     return await request.multiple(req, '/' + relation + '/' + id + '/' + extra + '/values');
 }
@@ -522,66 +546,151 @@ async function fixWeapons(req, route, model) {
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-function ensureExists(model) {
-    model.exists = {
-        identity: !!model.identity,
-        nature: !!model.nature,
-        wealth: !!model.wealth,
-        country: !!model.country,
-        corporation: !!model.corporation,
-        species: model.species.length > 0
-    };
+async function calculatePoints(req, model) {
+    try {
+        let config = await request.get(req, '/system/config/points');
+        let age = model.creature.age;
 
-    return model;
+        /*
+        Setting Simple (boolean) points "exists"
+        If the value is false, we want to let player add it
+         */
+
+        model.exists = {
+            identity: !!model.identity,
+            nature: !!model.nature,
+            wealth: !!model.wealth,
+            country: !!model.country,
+            corporation: !!model.corporation,
+            species: !!model.species,
+        };
+
+        /*
+        Checking if creature has enough of these
+        positive value means we want to add that many to creature
+         */
+        let milestone = config.baseline.milestone + MINMAX(age / config.divide.milestone, 1, config.maximum.milestone);
+
+        model.missing = {
+            gift: config.baseline.gift - model.gifts.length,
+            imperfection: config.baseline.imperfection - model.imperfections.length,
+            background: config.baseline.background - model.backgrounds.length,
+            milestone: milestone - model.milestones.length,
+        };
+
+        /*
+        Setting Points
+         */
+
+        let points = {
+            skill: config.baseline.skill,
+            expertise: config.baseline.expertise,
+            primal: config.baseline.primal,
+            spell: config.baseline.spell,
+
+            language: config.baseline.language * config.cost.language,
+            form: config.baseline.form * config.cost.form,
+        };
+
+        points.expertise += MINMAX(age / config.divide.expertise, 1, config.maximum.expertise);
+        points.primal += MINMAX(age / config.divide.primal, 1, config.maximum.primal);
+        points.skill += MINMAX(age / config.divide.skill, 1, config.maximum.skill);
+        points.spell += MINMAX(age / config.divide.spell, 1, config.maximum.spell);
+
+        model.points = {
+            skill: points.skill,
+            expertise: points.expertise,
+            primal: points.primal,
+            spell: points.spell,
+
+            language: points.language - (model.languages.length * config.cost.language),
+            form: points.form - (model.forms.length * config.cost.form),
+        };
+
+        // Expertise Additive calculation
+        for(let i in model.expertises) {
+            let value = model.expertises[i].value;
+
+            for(let n = value; n > 0; n--) {
+                model.points.expertise -= n;
+            }
+        }
+
+        // Primal Additive calculation
+        for(let i in model.primals) {
+            let value = model.primals[i].value;
+
+            for(let n = value; n > 0; n--) {
+                model.points.primal -= n;
+            }
+        }
+
+        // Skill Additive calculation
+        for(let i in model.skills) {
+            let value = model.skills[i].value;
+
+            for(let n = value; n > 0; n--) {
+                model.points.skill -= n;
+            }
+        }
+
+        // Spell calculation
+        for(let i in model.spells) {
+            model.points.spell -= model.spells[i].cost;
+        }
+
+        return model;
+    } catch(e) {
+        return e;
+    }
 }
 
-function calculatePoints(model) {
-    model.points = {
-        background: model.backgrounds.length,
-        expertise: 0,
-        form: model.forms.length,
-        gift: model.gifts.length,
-        imperfection: model.imperfections.length,
-        language: model.languages.length,
-        milestone: model.milestones.length,
-        primal: 0,
-        skill: 0,
-        spell: 0
-    };
+async function calculateExperience(req, model) {
+    try {
+        let config = await request.get(req, '/system/config/attributes');
+        let id = config.experience;
 
-    // Expertise Additive calculation
-    for(let i in model.expertises) {
-        let value = model.expertises[i].value;
-
-        for(let n = value; n > 0; n--) {
-            model.points.expertise += n;
+        let key;
+        for(let i in model.attributes) {
+            if(model.attributes[i].id !== id) continue;
+            key = i;
         }
-    }
 
-    // Primal Additive calculation
-    for(let i in model.primals) {
-        let value = model.primals[i].value;
+        for(let i in model.points) {
+            if(model.points[i] > 0) continue;
 
-        for(let n = value; n > 0; n--) {
-            model.points.primal += n;
+            model.attributes[key].value += model.points[i];
         }
-    }
 
-    // Skill Additive calculation
-    for(let i in model.skills) {
-        let value = model.skills[i].value;
+        return model;
+    } catch(e) { return e; }
+}
 
-        for(let n = value; n > 0; n--) {
-            model.points.skill += n;
+async function calculateWounds(req, model) {
+    try {
+        let config = await request.get(req, '/system/config/attributes');
+        let wounds = config.wounds;
+
+        for(let i in wounds) {
+            let id = wounds[i];
+
+            let key;
+            for(let i in model.attributes) {
+                if(model.attributes[i].id !== id) continue;
+                key = i;
+            }
+
+            let list = model[i];
+
+            for(let k in list) {
+                if(list[k].healed) continue;
+
+                model.attributes[key].value -= list[k].value;
+            }
         }
-    }
 
-    // Spell calculation
-    for(let i in model.spells) {
-        model.points.spell += model.spells[i].cost;
-    }
-
-    return model;
+        return model;
+    } catch(e) { return e; }
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -801,6 +910,36 @@ function addPrimals(model) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+async function sortAttributes(req, model) {
+    try {
+        let data = await request.get(req, '/attributetypes');
+        let types = data.results;
+
+        let object = {};
+
+        for(let i in types) {
+            let id = types[i].id;
+            let name = types[i].name;
+            let key = name.toLowerCase();
+            let array = [];
+
+            for(let x in model.attributes) {
+                if(model.attributes[x].type.id !== id) continue;
+
+                array.push(model.attributes[x]);
+            }
+
+            if(array.length > 0) {
+                object[key] = { title: name, list: array };
+            }
+        }
+
+        return object;
+    } catch(e) { return e; }
+}
+
+// ////////////////////////////////////////////////////////////////////////////////// //
 // PUBLIC
 // ////////////////////////////////////////////////////////////////////////////////// //
 
@@ -863,20 +1002,24 @@ async function id(req, id) {
         traumas: await request.multiple(req, route + '/traumas'),
 
         exists: {},
+        missing: {},
         points: {},
 
         labels: await request.multiple(req, route + '/labels'),
         comments: await request.multiple(req, route + '/comments')
     };
 
-    model = ensureExists(model);
-    model = calculatePoints(model);
+    model = await calculatePoints(req, model);
+    model = await calculateExperience(req, model);
+    model = await calculateWounds(req, model);
 
     model.weapons = await fixWeapons(req, route, model);
 
     model = addAttributes(model);
     model = addSkills(model);
     model = addPrimals(model);
+
+    model.attributes = await sortAttributes(req, model);
 
     return model;
 }
