@@ -147,6 +147,8 @@ async function getPermissions(req, route) {
     } catch(e) { return null; }
 }
 
+// ////////////////////////////////////////////////////////////////////////////////// //
+
 async function getAttributes(req, route) {
     const relation = 'attributes';
 
@@ -198,7 +200,7 @@ async function getSpecies(req, route) {
         let data = await request.single(req, route + '/' + relation);
 
         if(data !== null) {
-            data.attributes = await getValues(req, relation, data.id, 'attributes');
+            data.attributes = await getValues(req, relation, data.id, 'attribute');
         }
 
         return data;
@@ -212,8 +214,8 @@ async function getGifts(req, route) {
         let data = await request.multiple(req, route + '/' + relation);
 
         for(let i in data) {
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -227,8 +229,8 @@ async function getImperfections(req, route) {
         let data = await request.multiple(req, route + '/' + relation);
 
         for(let i in data) {
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -242,9 +244,9 @@ async function getBackgrounds(req, route) {
         let data = await request.multiple(req, route + '/' + relation);
 
         for(let i in data) {
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].primals = await getValues(req, relation, data[i].id, 'primals');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].primals = await getValues(req, relation, data[i].id, 'primal');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -258,9 +260,9 @@ async function getMilestones(req, route) {
         let data = await request.multiple(req, route + '/' + relation);
 
         for(let i in data) {
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].primals = await getValues(req, relation, data[i].id, 'primals');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].primals = await getValues(req, relation, data[i].id, 'primal');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -274,7 +276,7 @@ async function getManifestations(req, route) {
         let data = await request.multiple(req, route + '/' + relation);
 
         for(let i in data) {
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
         }
 
         return data;
@@ -343,15 +345,15 @@ async function getBionics(req, route) {
             delete data[i].bodypart_id;
             delete data[i].bodypart_name;
 
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
             data[i].augmentations = await request.multiple(req, route + '/' + relation + '/' + data[i].id + '/augmentations/names');
 
             for(let n in data[i].augmentations) {
                 let id = data[i].augmentations[n].id;
 
-                data[i].augmentations[n].attributes = await getValues(req, 'augmentation', id, 'attributes');
-                data[i].augmentations[n].skills = await getValues(req, 'augmentation', id, 'skills');
+                data[i].augmentations[n].attributes = await getValues(req, 'augmentations', id, 'attribute');
+                data[i].augmentations[n].skills = await getValues(req, 'augmentations', id, 'skill');
             }
         }
 
@@ -402,9 +404,9 @@ async function getAssets(req, route) {
             delete data[i].assettype_id;
             delete data[i].assettype_name;
 
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].primals = await getValues(req, relation, data[i].id, 'primals');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].primals = await getValues(req, relation, data[i].id, 'primal');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -426,9 +428,9 @@ async function getArmours(req, route) {
             delete data[i].bodypart_id;
             delete data[i].bodypart_name;
 
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].primals = await getValues(req, relation, data[i].id, 'primals');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].primals = await getValues(req, relation, data[i].id, 'primal');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -462,9 +464,9 @@ async function getShields(req, route) {
             delete data[i].critical_dice;
             delete data[i].critical_bonus;
 
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].primals = await getValues(req, relation, data[i].id, 'primals');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].primals = await getValues(req, relation, data[i].id, 'primal');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
         }
 
         return data;
@@ -516,9 +518,9 @@ async function fixWeapons(req, route, model) {
             delete data[i].critical_dice;
             delete data[i].critical_bonus;
 
-            data[i].attributes = await getValues(req, relation, data[i].id, 'attributes');
-            data[i].primals = await getValues(req, relation, data[i].id, 'primals');
-            data[i].skills = await getValues(req, relation, data[i].id, 'skills');
+            data[i].attributes = await getValues(req, relation, data[i].id, 'attribute');
+            data[i].primals = await getValues(req, relation, data[i].id, 'primal');
+            data[i].skills = await getValues(req, relation, data[i].id, 'skill');
             data[i].mods = await request.multiple(req, route + '/' + relation + '/' + data[i].id + '/mods');
 
             for(let n in data[i].mods) {
@@ -549,7 +551,7 @@ async function fixWeapons(req, route, model) {
 async function calculatePoints(req, model) {
     try {
         let config = await request.get(req, '/system/config/points');
-        let age = model.creature.age;
+        let age = model.main.age;
 
         /*
         Setting Simple (boolean) points "exists"
@@ -951,7 +953,7 @@ async function id(req, id) {
     const route = root + '/' + id;
 
     let model = {
-        creature: await request.single(req, route),
+        main: await request.single(req, route),
 
         // Permission
         permissions: await getPermissions(req, route),

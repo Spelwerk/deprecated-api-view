@@ -1,5 +1,6 @@
 'use strict';
 
+const generic = require('../../lib/generic');
 const model = require('../../models/creatures');
 
 module.exports = function(router) {
@@ -7,9 +8,11 @@ module.exports = function(router) {
     router.route('/')
         .get(async (req, res, next) => {
             try {
-                let data = await model.list(req);
+                let result = {};
+                result.user = await generic.user(req);
+                result.model = await model.list(req);
 
-                res.status(200).send(data);
+                res.status(200).send(result);
             } catch(e) {
                 next(e);
             }
@@ -18,9 +21,11 @@ module.exports = function(router) {
     router.route('/:id')
         .get(async (req, res, next) => {
             try {
-                let data = await model.id(req, req.params.id);
+                let result = {};
+                result.user = await generic.user(req);
+                result.model = await model.id(req, req.params.id);
 
-                res.status(200).send(data);
+                res.status(200).send(result);
             } catch(e) {
                 next(e);
             }

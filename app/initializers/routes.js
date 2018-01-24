@@ -24,7 +24,7 @@ module.exports = async (app) => {
 
             const router = express.Router();
 
-            require(path.join(folder, name))(router);
+            require(path.join(folder, name))(router, name);
 
             app.use('/' + name, router);
         } catch(e) {

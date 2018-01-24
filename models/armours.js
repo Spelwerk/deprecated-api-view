@@ -1,33 +1,20 @@
 'use strict';
 
 let request = require('../lib/request');
-const root = '/armours';
 
-// ////////////////////////////////////////////////////////////////////////////////// //
-// PRIVATE
-// ////////////////////////////////////////////////////////////////////////////////// //
+const name = 'armour';
+const root = '/armours';
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PUBLIC
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function list(req) {
-    return await request.get(req, root);
+
 }
 
 async function id(req, id) {
-    try {
-        let route = root + '/' + id;
-        let object = await request.get(req, route);
 
-        object.result.attributes = await request.relation(req, route, 'attributes');
-        object.result.primals = await request.relation(req, route, 'primals');
-        object.result.skills = await request.relation(req, route, 'skills');
-
-        return object;
-    } catch(e) {
-        return e;
-    }
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
