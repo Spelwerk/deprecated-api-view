@@ -1,9 +1,9 @@
 'use strict';
 
-const request = require('./request');
+const request = require('../lib/request');
 
 // ////////////////////////////////////////////////////////////////////////////////// //
-// PRIVATE
+// PUBLIC
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function getPermissions(req, route, id) {
@@ -45,8 +45,6 @@ async function getComments(req, route, id) {
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
-// PUBLIC
-// ////////////////////////////////////////////////////////////////////////////////// //
 
 async function user(req) {
     try {
@@ -75,7 +73,7 @@ async function id(req, route, id) {
         for(let i in schema.tables.hasMany) {
             let relation = schema.tables.hasMany[i];
 
-            model[relation] = await request.relation(req, route + '/' + id, relation + '/values');
+            model[relation] = await request.relation(req, route + '/' + id, relation + '/value');
         }
 
         model.labels = await getLabels(req, route, id);
@@ -88,6 +86,10 @@ async function id(req, route, id) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 // EXPORTS
 // ////////////////////////////////////////////////////////////////////////////////// //
+
+module.exports.getPermissions = getPermissions;
+module.exports.getLabels = getLabels;
+module.exports.getComments = getComments;
 
 module.exports.user = user;
 module.exports.list = list;

@@ -1,6 +1,6 @@
 'use strict';
 
-const generic = require('../../lib/generic');
+const generic = require('../../models/generic');
 const model = require('../../models/creatures');
 
 module.exports = function(router) {

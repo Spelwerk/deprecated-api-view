@@ -32,7 +32,7 @@ function MINMAX(number, floor, roof) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function getValues(req, relation, id, extra) {
-    return await request.multiple(req, '/' + relation + '/' + id + '/' + extra + '/values');
+    return await request.multiple(req, '/' + relation + '/' + id + '/' + extra + '/value');
 }
 
 async function getCreatureWeapons(req, model) {

@@ -1,9 +1,10 @@
 'use strict';
 
 const generic = require('../../models/generic');
+const model = require('../../models/mileGround');
 
-module.exports = (router, route) => {
-    route = '/' + route;
+module.exports = (router, name) => {
+    const route = '/' + name;
 
     router.get('/', async (req, res, next) => {
         try {
@@ -19,7 +20,7 @@ module.exports = (router, route) => {
         try {
             let result = {};
             result.user = await generic.user(req);
-            result.model = await generic.id(req, route, req.params.id);
+            result.model = await model.id(req, route, req.params.id);
 
             res.status(200).send(result);
         } catch(e) { next(e); }
