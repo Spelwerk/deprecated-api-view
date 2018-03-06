@@ -44,6 +44,30 @@ async function getComments(req, route, id) {
     } catch(e) { return e; }
 }
 
+function splitUnderscore(item, keyName) {
+    let object = {};
+
+    for(let key in item) {
+        if(key.indexOf(keyName) === -1) continue;
+
+        let split = key.split('_')[1];
+
+        object[split] = item[key];
+        delete item[key];
+    }
+
+    return object;
+}
+
+function getSingleFromPlural(route, plural) {
+    for(let single in plural) {
+        if(!plural.hasOwnProperty(single)) continue;
+        if(plural[single] !== route) continue;
+
+        return single;
+    }
+}
+
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function user(req) {
@@ -59,25 +83,40 @@ async function user(req) {
 }
 
 async function list(req, route) {
-    return await request.get(req, route);
+    return await request.get(req, '/' + route);
 }
 
 async function id(req, route, id) {
-    try {
-        let model = {};
-        let schema = await request.get(req, route + '/schema');
+    let slashRoute = '/' + route;
+    let model = {};
 
-        model.main = await request.single(req, route + '/' + id);
-        model.permissions = await getPermissions(req, route, id);
+    try {
+        let plural = await request.get(req, '/system/config/plural');
+        let schema = await request.get(req, slashRoute + '/schema');
+
+        let modelName = getSingleFromPlural(route, plural);
+        let item = await request.single(req, slashRoute + '/' + id);
+
+        for(let key in item) {
+            if(key.indexOf('_') === -1) continue;
+            let split = key.split('_')[0];
+
+            item[split] = splitUnderscore(item, split);
+        }
+
+        model[modelName] = item;
+
+        model.permissions = await getPermissions(req, slashRoute, id);
 
         for(let i in schema.tables.hasMany) {
             let relation = schema.tables.hasMany[i];
+            let relationRoute = plural[relation];
 
-            model[relation] = await request.relation(req, route + '/' + id, relation + '/value');
+            model[relationRoute] = await request.multiple(req, '/' + route + '/' + id + '/' + relationRoute + '/mini');
         }
 
-        model.labels = await getLabels(req, route, id);
-        model.comments = await getComments(req, route, id);
+        model.labels = await getLabels(req, slashRoute, id);
+        model.comments = await getComments(req, slashRoute, id);
 
         return model;
     } catch(e) { return e; }
