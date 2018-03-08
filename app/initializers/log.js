@@ -6,7 +6,7 @@ const logger = require('../../lib/logger');
 module.exports = (app) => {
     logger.info('[LOG] Initializing');
 
-    app.use(function(req, res, next) {
+    app.use((req, res, next) => {
         req.log = {
             id: uuid(),
             host: req.headers['host'],
@@ -16,8 +16,8 @@ module.exports = (app) => {
             body: {}
         };
 
-        for(let key in req.body) {
-            if(key === 'password') continue;
+        for (let key in req.body) {
+            if (key === 'password') continue;
 
             req.log.body[key] = req.body[key];
         }

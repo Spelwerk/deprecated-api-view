@@ -3,8 +3,7 @@
 const generic = require('../../models/generic');
 const model = require('../../models/creatures');
 
-module.exports = function(router) {
-
+module.exports = (router) => {
     router.route('/')
         .get(async (req, res, next) => {
             try {
@@ -30,5 +29,4 @@ module.exports = function(router) {
                 next(e);
             }
         });
-
 };
