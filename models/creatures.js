@@ -4,15 +4,13 @@ const request = require('../lib/request');
 const utilities = require('../lib/utilities');
 const weapons = require('../lib/creatures/weapons');
 
-const root = '/creatures';
-
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PRIVATE
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-async function getPermissions(req, route) {
+async function getPermissions(req, id) {
     try {
-        let data = await request.get(req, route + '/permissions');
+        let data = await request.get(req, '/creatures/' + id + '/permissions');
 
         if (!data) return null;
 
@@ -20,239 +18,78 @@ async function getPermissions(req, route) {
     } catch(e) { return null; }
 }
 
-// ////////////////////////////////////////////////////////////////////////////////// //
-
-async function getAttributes(req, route) {
+async function getList(req, id, listRoute) {
     try {
-        let data = await request.multiple(req, route + '/attributes');
+        let data = await request.multiple(req, '/creatures/' + id + '/' + listRoute);
 
-        for (let i in data) {
-            let item = data[i];
+        if (data.length > 0) {
+            const schema = await request.get(req, '/' + listRoute + '/schema');
+            const hasMany = schema.tables.hasMany;
 
-            item = utilities.splitUnderscoreInItem(item);
-        }
+            for (let i in data) {
+                let item = data[i];
 
-        return data;
-    } catch(e) { return []; }
-}
+                item = utilities.splitUnderscoreInItem(item);
 
-async function getExpertises(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/expertises');
+                if (hasMany.indexOf('attribute') !== -1) {
+                    item.attributes = await request.multiple(req, '/' + listRoute + '/' + item.id + '/attributes');
+                }
 
-        for (let i in data) {
-            let item = data[i];
+                if (hasMany.indexOf('skill') !== -1) {
+                    item.skills = await request.multiple(req, '/' + listRoute + '/' + item.id + '/skills');
+                }
 
-            item = utilities.splitUnderscoreInItem(item);
+                if (hasMany.indexOf('primal') !== -1) {
+                    item.primals = await request.multiple(req, '/' + listRoute + '/' + item.id + '/primals');
+                }
+            }
+
+            utilities.sortArrayOnProperty(data, 'name');
         }
 
         return data;
     } catch(e) { return e; }
 }
 
-async function getSpecies(req, route) {
+async function getSpecies(req, id) {
     try {
-        let data = await request.single(req, route + '/species');
+        let data = await request.single(req, '/creatures/' + id + '/species');
 
         if (data !== null) {
             data = utilities.splitUnderscoreInItem(data);
 
-            data.attributes = await request.multiple(req, route + '/gifts/' + data.id + '/attributes/mini');
+            data.attributes = await request.multiple(req, '/gifts/' + data.id + '/attributes');
         }
 
         return data;
     } catch(e) { return e; }
 }
 
-async function getGifts(req, route) {
+async function getBionics(req, id) {
     try {
-        let data = await request.multiple(req, route + '/gifts');
+        let data = await request.multiple(req, '/creatures/' + id + '/bionics');
 
-        for (let i in data) {
-            let item = data[i];
+        if (data.length > 0) {
+            for (let i in data) {
+                let item = data[i];
 
-            item = utilities.splitUnderscoreInItem(item);
+                item = utilities.splitUnderscoreInItem(item);
 
-            item.attributes = await request.multiple(req, route + '/gifts/' + item.id + '/attributes/mini');
-            item.attributes = await request.multiple(req, route + '/gifts/' + item.id + '/skills/mini');
-        }
+                item.attributes = await request.multiple(req, '/bionics/' + item.id + '/attributes');
+                item.skills = await request.multiple(req, '/bionics/' + item.id + '/skills');
+                item.augmentations = await request.multiple(req, '/bionics/' + item.id + '/augmentations');
 
-        return data;
-    } catch(e) { return e; }
-}
+                for (let n in item.augmentations) {
+                    let aug = item.augmentations[n];
 
-async function getImperfections(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/imperfections');
+                    aug = utilities.splitUnderscoreInItem(aug);
 
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/imperfections/' + item.id + '/attributes/mini');
-            item.attributes = await request.multiple(req, route + '/imperfections/' + item.id + '/skills/mini');
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getBackgrounds(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/backgrounds');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/backgrounds/' + item.id + '/attributes/mini');
-            item.attributes = await request.multiple(req, route + '/backgrounds/' + item.id + '/primals/mini');
-            item.attributes = await request.multiple(req, route + '/backgrounds/' + item.id + '/skills/mini');
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getMilestones(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/milestones');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/milestones/' + item.id + '/attributes/mini');
-            item.attributes = await request.multiple(req, route + '/milestones/' + item.id + '/primals/mini');
-            item.attributes = await request.multiple(req, route + '/milestones/' + item.id + '/skills/mini');
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getManifestations(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/manifestations');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/manifestations/' + item.id + '/attributes/mini');
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getSpells(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/spells');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getBionics(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/bionics');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/bionics/' + item.id + '/attributes/mini');
-            item.skills = await request.multiple(req, route + '/bionics/' + item.id + '/skills/mini');
-            item.augmentations = await request.multiple(req, route + '/bionics/' + item.id + '/augmentations/mini');
-
-            for (let n in item.augmentations) {
-                let aug = item.augmentations[n];
-
-                aug = utilities.splitUnderscoreInItem(aug);
-
-                aug.attributes = await request.multiple(req, route + '/bionics/' + aug.id + '/attributes/mini');
-                aug.skills = await request.multiple(req, route + '/bionics/' + aug.id + '/skills/mini');
+                    aug.attributes = await request.multiple(req, '/bionics/' + aug.id + '/attributes');
+                    aug.skills = await request.multiple(req, '/bionics/' + aug.id + '/skills');
+                }
             }
-        }
 
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getSoftware(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/software');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getAssets(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/assets');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/assets/' + item.id + '/attributes/mini');
-            item.primals = await request.multiple(req, route + '/assets/' + item.id + '/primals/mini');
-            item.skills = await request.multiple(req, route + '/assets/' + item.id + '/skills/mini');
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getArmours(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/armours');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, route + '/armours/' + item.id + '/attributes/mini');
-            item.primals = await request.multiple(req, route + '/armours/' + item.id + '/primals/mini');
-            item.skills = await request.multiple(req, route + '/armours/' + item.id + '/skills/mini');
-        }
-
-        return data;
-    } catch(e) { return e; }
-}
-
-async function getShields(req, route) {
-    try {
-        let data = await request.multiple(req, route + '/shields');
-
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-
-            item.attributes = await request.multiple(req, '/shields/' + item.id + '/attributes/mini');
-            item.primals = await request.multiple(req, '/shields/' + item.id + '/primals/mini');
-            item.skills = await request.multiple(req, '/shields/' + item.id + '/skills/mini');
+            utilities.sortArrayOnProperty(data, 'name');
         }
 
         return data;
@@ -285,7 +122,7 @@ async function calculatePoints(req, model) {
         positive value means we want to add that many to creature
          */
 
-        let milestone = config.baseline.milestone + utilities.MINMAX(age / config.divide.milestone, 1, config.maximum.milestone);
+        let milestone = config.baseline.milestone + utilities.minMax(age / config.divide.milestone, 1, config.maximum.milestone);
 
         model.missing = {
             gift: config.baseline.gift - model.gifts.length,
@@ -308,10 +145,10 @@ async function calculatePoints(req, model) {
             form: config.baseline.form * config.cost.form,
         };
 
-        points.expertise += utilities.MINMAX(age / config.divide.expertise, 1, config.maximum.expertise);
-        points.primal += utilities.MINMAX(age / config.divide.primal, 1, config.maximum.primal);
-        points.skill += utilities.MINMAX(age / config.divide.skill, 1, config.maximum.skill);
-        points.spell += utilities.MINMAX(age / config.divide.spell, 1, config.maximum.spell);
+        points.expertise += utilities.minMax(age / config.divide.expertise, 1, config.maximum.expertise);
+        points.primal += utilities.minMax(age / config.divide.primal, 1, config.maximum.primal);
+        points.skill += utilities.minMax(age / config.divide.skill, 1, config.maximum.skill);
+        points.spell += utilities.minMax(age / config.divide.spell, 1, config.maximum.spell);
 
         model.points = {
             skill: points.skill,
@@ -632,6 +469,8 @@ async function sortAttributes(req, model) {
         let data = await request.get(req, '/attributetypes');
         let types = data.results;
 
+        utilities.sortArrayOnProperty(types, "name");
+
         let object = {};
 
         for (let i in types) {
@@ -660,22 +499,22 @@ async function sortAttributes(req, model) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function list(req) {
-    return await request.get(req, root);
+    return await request.get(req, '/creatures');
 }
 
 async function id(req, id) {
-    const route = root + '/' + id;
+    const route = '/creatures/' + id;
 
     let model = {
         main: await request.single(req, route),
 
         // Permission
-        permissions: await getPermissions(req, route),
+        permissions: await getPermissions(req, id),
 
         // Defining
         identity: await request.single(req, route + '/identity'),
         nature: await request.single(req, route + '/nature'),
-        species: await getSpecies(req, route),
+        species: await getSpecies(req, id),
         wealth: await request.single(req, route + '/wealth'),
 
         // Single
@@ -685,33 +524,33 @@ async function id(req, id) {
         corporation: await request.single(req, route + '/corporation'),
 
         // Arrays
-        attributes: await getAttributes(req, route),
-        skills: await request.multiple(req, route + '/skills'),
-        expertises: await getExpertises(req, route),
+        attributes: await getList(req, id, 'attributes'),
+        skills: await getList(req, id, 'skills'),
+        expertises: await getList(req, id, 'expertises'),
 
-        gifts: await getGifts(req, route),
-        imperfections: await getImperfections(req, route),
-        backgrounds: await getBackgrounds(req, route),
-        milestones: await getMilestones(req, route),
-        languages: await request.multiple(req, route + '/languages'),
-        currencies: await request.multiple(req, route + '/currencies'),
+        gifts: await getList(req, id, 'gifts'),
+        imperfections: await getList(req, id, 'imperfections'),
+        backgrounds: await getList(req, id, 'backgrounds'),
+        milestones: await getList(req, id, 'milestones'),
+        languages: await getList(req, id, 'languages'),
+        currencies: await getList(req, id, 'currencies'),
 
-        manifestations: await getManifestations(req, route),
-        primals: await request.multiple(req, route + '/primals'),
-        spells: await getSpells(req, route),
-        forms: await request.multiple(req, route + '/forms'),
+        manifestations: await getList(req, id, 'manifestations'),
+        primals: await getList(req, id, 'primals'),
+        spells: await getList(req, id, 'spells'),
+        forms: await getList(req, id, 'forms'),
 
-        bionics: await getBionics(req, route),
-        software: await getSoftware(req, route),
+        bionics: await getBionics(req, id),
+        software: await getList(req, id, 'software'),
 
-        assets: await getAssets(req, route),
-        armours: await getArmours(req, route),
-        shields: await getShields(req, route),
+        assets: await getList(req, id, 'assets'),
+        armours: await getList(req, id, 'armours'),
+        shields: await getList(req, id, 'shields'),
 
         weapons: [],
 
-        loyalties: await request.multiple(req, route + '/loyalties'),
-        relations: await request.multiple(req, route + '/relations'),
+        loyalties: await getList(req, id, '/loyalties'),
+        relations: await getList(req, id, '/relations'),
 
         dementations: await request.multiple(req, route + '/dementations'),
         diseases: await request.multiple(req, route + '/diseases'),
@@ -729,7 +568,7 @@ async function id(req, id) {
     model = await calculateExperience(req, model);
     model = await calculateWounds(req, model);
 
-    model.weapons = await weapons.get(req, route, model);
+    model.weapons = await weapons.get(req, id, model);
 
     model = addAttributes(model);
     model = addSkills(model);

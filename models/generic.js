@@ -84,7 +84,7 @@ async function id(req, route, id) {
             let relation = schema.tables.hasMany[i];
             let relationRoute = plural[relation];
 
-            model[relationRoute] = await request.multiple(req, '/' + route + '/' + id + '/' + relationRoute + '/mini');
+            model[relationRoute] = await request.multiple(req, '/' + route + '/' + id + '/' + relationRoute);
         }
 
         model.labels = await getLabels(req, slashRoute, id);
