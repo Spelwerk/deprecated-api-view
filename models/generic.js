@@ -8,41 +8,35 @@ const utilities = require('../lib/utilities');
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function getPermissions(req, route, id) {
-    try {
-        let data;
+    let data;
 
-        if (typeof req.headers['x-user-token'] !== 'undefined' && req.headers['x-user-token'] !== null) {
-            data = await request.get(req, route + '/' + id + '/permissions');
-        }
+    if (typeof req.headers['x-user-token'] !== 'undefined' && req.headers['x-user-token'] !== null) {
+        data = await request.get(req, route + '/' + id + '/permissions');
+    }
 
-        if (!data) return null;
+    if (!data) return null;
 
-        return data;
-    } catch(e) { return e; }
+    return data;
 }
 
 async function getLabels(req, route, id) {
-    try {
-        let data;
+    let data;
 
-        data = await request.multiple(req, route + '/' + id + '/labels');
+    data = await request.multiple(req, route + '/' + id + '/labels');
 
-        if (!data) return null;
+    if (!data) return null;
 
-        return data;
-    } catch(e) { return e; }
+    return data;
 }
 
 async function getComments(req, route, id) {
-    try {
-        let data;
+    let data;
 
-        data = await request.multiple(req, route + '/' + id + '/comments');
+    data = await request.multiple(req, route + '/' + id + '/comments');
 
-        if (!data) return null;
+    if (!data) return null;
 
-        return data;
-    } catch(e) { return e; }
+    return data;
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -78,8 +72,6 @@ async function id(req, route, id) {
 
         model[modelName] = item;
 
-        model.permissions = await getPermissions(req, slashRoute, id);
-
         for (let i in schema.tables.hasMany) {
             let relation = schema.tables.hasMany[i];
             let relationRoute = plural[relation];
@@ -87,6 +79,7 @@ async function id(req, route, id) {
             model[relationRoute] = await request.multiple(req, '/' + route + '/' + id + '/' + relationRoute);
         }
 
+        model.permissions = await getPermissions(req, slashRoute, id);
         model.labels = await getLabels(req, slashRoute, id);
         model.comments = await getComments(req, slashRoute, id);
 
