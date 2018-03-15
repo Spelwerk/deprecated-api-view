@@ -120,6 +120,16 @@ async function calculatePoints(req, model) {
     };
 
     /*
+    Checking if creature has species and multiplying points
+     */
+
+    let speciesMultiplier = 1;
+
+    if(model.exists.species) {
+        speciesMultiplier = utilities.floor(model.species.multiply.points, 1);
+    }
+
+    /*
     Checking if creature has enough of these
     positive value means we want to add that many to creature
      */
@@ -138,19 +148,19 @@ async function calculatePoints(req, model) {
      */
 
     let points = {
-        skill: config.baseline.skill,
-        expertise: config.baseline.expertise,
-        primal: config.baseline.primal,
-        spell: config.baseline.spell,
+        skill: config.baseline.skill * speciesMultiplier,
+        expertise: config.baseline.expertise * speciesMultiplier,
+        primal: config.baseline.primal * speciesMultiplier,
+        spell: config.baseline.spell * speciesMultiplier,
 
         language: config.baseline.language * config.cost.language,
         form: config.baseline.form * config.cost.form,
     };
 
-    points.expertise += utilities.minMax(age / config.divide.expertise, 1, config.maximum.expertise);
-    points.primal += utilities.minMax(age / config.divide.primal, 1, config.maximum.primal);
-    points.skill += utilities.minMax(age / config.divide.skill, 1, config.maximum.skill);
-    points.spell += utilities.minMax(age / config.divide.spell, 1, config.maximum.spell);
+    points.expertise = utilities.minMax(points.expertise + (age / config.divide.expertise), 1, config.maximum.expertise);
+    points.primal = utilities.minMax(points.primal + (age / config.divide.primal), 1, config.maximum.primal);
+    points.skill = utilities.minMax(points.skill + (age / config.divide.skill), 1, config.maximum.skill);
+    points.spell = utilities.minMax(points.spell + (age / config.divide.spell), 1, config.maximum.spell);
 
     model.points = {
         skill: points.skill,
@@ -566,6 +576,8 @@ async function id(req, id) {
         labels: await generic.getLabels(req, '/creatures', id),
         comments: await generic.getComments(req, '/creatures', id)
     };
+
+    model.main = utilities.splitUnderscoreInItem(model.main);
 
     model = await calculatePoints(req, model);
     model = await calculateExperience(req, model);
