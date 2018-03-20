@@ -1,9 +1,9 @@
 'use strict';
 
-const request = require('../lib/request');
-const generic = require('./generic');
-const utilities = require('../lib/utilities');
-const weapons = require('../lib/creatures/weapons');
+const request = require('../../lib/request');
+const generic = require('../generic');
+const utilities = require('../../lib/utilities');
+const weapons = require('../../lib/creatures/weapons');
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PRIVATE
@@ -34,7 +34,7 @@ async function getList(req, id, listRoute) {
             }
         }
 
-        utilities.sortArrayOnProperty(data, 'name');
+        data = utilities.sortArrayOnProperty(data, 'name');
     }
 
     return data;
@@ -77,7 +77,7 @@ async function getBionics(req, id) {
             }
         }
 
-        utilities.sortArrayOnProperty(data, 'name');
+        data = utilities.sortArrayOnProperty(data, 'name');
     }
 
     return data;
@@ -86,15 +86,8 @@ async function getBionics(req, id) {
 async function getRelations(req, id) {
     let data = await request.multiple(req, '/creatures/' + id + '/relations');
 
-    if (data.length > 0) {
-        for (let i in data) {
-            let item = data[i];
-
-            item = utilities.splitUnderscoreInItem(item);
-        }
-
-        utilities.sortArrayOnProperty(data, 'name');
-    }
+    data = utilities.splitUnderscoreInArray(data);
+    data = utilities.sortArrayOnProperty(data, 'name');
 
     return data;
 }
@@ -174,7 +167,7 @@ async function calculatePoints(req, model) {
 
     // Expertise Additive calculation
     for (let i in model.expertises) {
-        let value = model.expertises[i].value;
+        let value = model.expertises[i].value.original;
 
         for (let n = value; n > 0; n--) {
             model.points.expertise -= n;
@@ -183,7 +176,7 @@ async function calculatePoints(req, model) {
 
     // Primal Additive calculation
     for (let i in model.primals) {
-        let value = model.primals[i].value;
+        let value = model.primals[i].value.original;
 
         for (let n = value; n > 0; n--) {
             model.points.primal -= n;
@@ -192,7 +185,7 @@ async function calculatePoints(req, model) {
 
     // Skill Additive calculation
     for (let i in model.skills) {
-        let value = model.skills[i].value;
+        let value = model.skills[i].value.original;
 
         for (let n = value; n > 0; n--) {
             model.points.skill -= n;
@@ -220,7 +213,7 @@ async function calculateExperience(req, model) {
     for (let i in model.points) {
         if (model.points[i] > 0) continue;
 
-        model.attributes[key].value += model.points[i];
+        model.attributes[key].value.modified += model.points[i];
     }
 
     return model;
@@ -244,7 +237,7 @@ async function calculateWounds(req, model) {
         for (let k in list) {
             if (list[k].healed) continue;
 
-            model.attributes[key].value -= list[k].value;
+            model.attributes[key].value.modified -= list[k].value;
         }
     }
 
@@ -279,6 +272,10 @@ function addAttributes(model) {
      */
 
     for (let i in model.attributes) {
+        model.attributes[i].value.modified = typeof model.attributes[i].value.modified !== 'undefined'
+            ? model.attributes[i].value.modified
+            : model.attributes[i].value.original;
+
         let id = model.attributes[i].id;
 
         /*
@@ -286,12 +283,12 @@ function addAttributes(model) {
          */
 
         if (model.species !== null) {
-            for (let u in model.species.attributes) {
+            for (let i in model.species.attributes) {
                 for (let o in model.species.attributes) {
                     let attribute = model.species.attributes[o];
 
                     if (id === attribute.id) {
-                        model.attributes[u].value += attribute.value;
+                        model.attributes[i].value.modified += attribute.value;
                     }
                 }
             }
@@ -316,7 +313,7 @@ function addAttributes(model) {
                     let attribute = attributes[o];
 
                     if (id === attribute.id) {
-                        model.attributes[i].value += attribute.value;
+                        model.attributes[i].value.modified += attribute.value;
                     }
                 }
             }
@@ -339,7 +336,7 @@ function addAttributes(model) {
                     let attribute = attributes[a];
 
                     if (id === attribute.id) {
-                        model.attributes[i].value += attribute.value;
+                        model.attributes[i].value.modified += attribute.value;
                     }
                 }
             }
@@ -374,6 +371,8 @@ function addSkills(model) {
      */
 
     for (let i in model.skills) {
+        model.skills[i].value.modified = model.skills[i].value.original;
+
         let id = model.skills[i].id;
 
         for (let k in array) {
@@ -388,7 +387,7 @@ function addSkills(model) {
                     let skill = skills[o];
 
                     if (id === skill.id) {
-                        model.skills[i].value += skill.value;
+                        model.skills[i].value.modified += skill.value;
                     }
                 }
             }
@@ -411,7 +410,7 @@ function addSkills(model) {
                     let skill = skills[a];
 
                     if (id === skill.id) {
-                        model.skills[i].value += skill.value;
+                        model.skills[i].value.modified += skill.value;
                     }
                 }
             }
@@ -443,6 +442,8 @@ function addPrimals(model) {
      */
 
     for (let i in model.primals) {
+        model.primals[i].value.modified = model.primals[i].value.original;
+
         let id = model.primals[i].id;
 
         for (let k in array) {
@@ -457,7 +458,7 @@ function addPrimals(model) {
                     let primal = primals[o];
 
                     if (id === primal.id) {
-                        model.primals[i].value += primal.value;
+                        model.primals[i].value.modified += primal.value;
                     }
                 }
             }
@@ -474,7 +475,7 @@ async function sortAttributes(req, model) {
         let data = await request.get(req, '/attributetypes');
         let types = data.results;
 
-        utilities.sortArrayOnProperty(types, "name");
+        types = utilities.sortArrayOnProperty(types, "name");
 
         let object = {};
 
