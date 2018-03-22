@@ -14,7 +14,7 @@ module.exports = async (req, id) => {
     const relation = 'background';
     const array = creature.backgrounds;
 
-    let data = await defaults.getDefaultData(req, creature, from, relation);
+    let data = await defaults.getDataFromDefault(req, creature, from, relation);
 
     const manifestationData = await defaults.getDataFromRelation(req, creature, from, relation, 'manifestation');
     const speciesData = await defaults.getDataFromRelation(req, creature, from, relation, 'species');

@@ -8,7 +8,19 @@ const utilities = require('../../../lib/utilities');
 // PUBLIC
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-async function getDefaultData(req, creature, from, relation) {
+async function getData(req, id, from, relation) {
+    const plural = await request.get(req, '/system/config/plural');
+    const creature = await creatures.id(req, id);
+
+    let data = await request.multiple(req, '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation]);
+
+    data = utilities.splitUnderscoreInArray(data);
+    data = utilities.sortArrayOnProperty(data, 'name');
+
+    return [creature, data];
+}
+
+async function getDataFromDefault(req, creature, from, relation) {
     const plural = await request.get(req, '/system/config/plural');
     const route = '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation];
 
@@ -38,22 +50,20 @@ async function getDataFromRelation(req, creature, fromBase, fromRelation, dataRe
     return data;
 }
 
-async function getData(req, id, from, relation) {
-    const plural = await request.get(req, '/system/config/plural');
-    const creature = await creatures.id(req, id);
+async function getDataForMultiple(req, id, from, relation) {
+    let data = await getData(req, id, from, relation);
+}
 
-    let data = await request.multiple(req, '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation]);
+async function getDataForSingle(req, id, from, relation) {
 
-    data = utilities.splitUnderscoreInArray(data);
-    data = utilities.sortArrayOnProperty(data, 'name');
-
-    return [creature, data];
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // EXPORTS
 // ////////////////////////////////////////////////////////////////////////////////// //
 
-module.exports.getDefaultData = getDefaultData;
-module.exports.getDataFromRelation = getDataFromRelation;
 module.exports.getData = getData;
+module.exports.getDataFromDefault = getDataFromDefault;
+module.exports.getDataFromRelation = getDataFromRelation;
+module.exports.getDataForMultiple = getDataForMultiple;
+module.exports.getDataForSingle = getDataForSingle;

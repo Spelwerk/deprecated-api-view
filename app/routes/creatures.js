@@ -52,14 +52,6 @@ module.exports = (router) => {
 
     //todo weapon
 
-    // World
-
-    //todo country
-
-    //todo identity
-
-    //todo nature
-
     router.get('/:id/edit/backgrounds', async (req, res, next) => {
         try {
             let [creature, data] = await backgrounds(req, req.params.id);
@@ -68,6 +60,34 @@ module.exports = (router) => {
                 user: await generic.user(req),
                 creature: creature,
                 backgrounds: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/corporation', async (req, res, next) => {
+        try {
+            let [creature, data] = await getData(req, req.params.id, 'epoch', 'corporation');
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                corporations: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/country', async (req, res, next) => {
+        try {
+            let [creature, data] = await getData(req, req.params.id, 'epoch', 'country');
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                countries: data
             };
 
             res.status(200).send(result);
@@ -96,6 +116,20 @@ module.exports = (router) => {
                 user: await generic.user(req),
                 creature: creature,
                 gifts: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/identity', async (req, res, next) => {
+        try {
+            let [creature, data] = await getData(req, req.params.id, 'epoch', 'identity');
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                identities: data
             };
 
             res.status(200).send(result);
@@ -138,6 +172,20 @@ module.exports = (router) => {
                 user: await generic.user(req),
                 creature: creature,
                 milestones: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/nature', async (req, res, next) => {
+        try {
+            let [creature, data] = await getData(req, req.params.id, 'epoch', 'nature');
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                natures: data
             };
 
             res.status(200).send(result);
