@@ -80,12 +80,14 @@ module.exports = async (req, id) => {
 
         let results = await getSkillData(req, creature, id);
 
-        results = utilities.pruneArrayFromExistingIds(results, creature.expertises);
-        results = utilities.splitUnderscoreInArray(results);
-        results = utilities.sortArrayOnProperty(results, 'name');
-        results = pruneExpertisesWithInsufficientSkillValue(results, value);
+        if (results.length > 0) {
+            results = utilities.pruneArrayFromExistingIds(results, creature.expertises);
+            results = utilities.splitUnderscoreInArray(results);
+            results = utilities.sortArrayOnProperty(results, 'name');
+            results = pruneExpertisesWithInsufficientSkillValue(results, value);
 
-        if(results.length > 0) data.push({id: id, name: name, value: value, expertises: results});
+            data.push({id: id, name: name, value: value, results: results});
+        }
     }
 
     return [creature, data];

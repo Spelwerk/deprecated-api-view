@@ -4,6 +4,7 @@ const request = require('../../../lib/request');
 const creatures = require('../creatures');
 const defaults = require('./defaults');
 const utilities = require('../../../lib/utilities');
+const plural = require('../../../app/initializers/config').get('plural');
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PRIVATE
@@ -26,16 +27,16 @@ module.exports = async (req, id) => {
     const creature = await creatures.id(req, id);
     const from = 'epoch';
     const relation = 'skill';
-    const array = creature.skills;
 
     let data = await getData(req, creature);
-    const manifestationResults = await defaults.getDataFromRelation(req, creature, from, relation, 'manifestation');
-    const speciesResults = await defaults.getDataFromRelation(req, creature, from, relation, 'species');
 
-    data = utilities.mergeArraysOnUniqueId(data, manifestationResults);
-    data = utilities.mergeArraysOnUniqueId(data, speciesResults);
+    const manifestationData = await defaults.getDataFilteredManifestation(req, creature, from, relation);
+    const speciesData = await defaults.getDataFilteredSpecies(req, creature, from, relation);
 
-    data = utilities.pruneArrayFromExistingIds(data, array);
+    data = utilities.mergeArraysOnUniqueId(data, manifestationData);
+    data = utilities.mergeArraysOnUniqueId(data, speciesData);
+
+    data = utilities.pruneArrayFromExistingIds(data, creature[plural[relation]]);
     data = utilities.splitUnderscoreInArray(data);
     data = utilities.sortArrayOnProperty(data, 'name');
 

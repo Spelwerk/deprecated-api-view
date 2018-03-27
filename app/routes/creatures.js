@@ -2,15 +2,21 @@
 
 const generic = require('../../models/generic');
 const model = require('../../models/creatures/creatures');
+const defaults = require('../../models/creatures/edit/defaults');
 
-const getData = require('../../models/creatures/edit/defaults').getData;
+const armours = require('../../models/creatures/edit/armours');
+const assets = require('../../models/creatures/edit/assets');
+const augmentations = require('../../models/creatures/edit/augmentations');
 const backgrounds = require('../../models/creatures/edit/backgrounds');
+const bionics = require('../../models/creatures/edit/bionics');
 const expertises = require('../../models/creatures/edit/expertises');
 const gifts = require('../../models/creatures/edit/gifts');
 const imperfections = require('../../models/creatures/edit/imperfections');
 const manifestations = require('../../models/creatures/edit/manifestations');
 const milestones = require('../../models/creatures/edit/milestones');
 const skills = require('../../models/creatures/edit/skills');
+const shields = require('../../models/creatures/edit/shields');
+const weapons = require('../../models/creatures/edit/weapons');
 
 module.exports = (router) => {
     router.get('/', async (req, res, next) => {
@@ -37,20 +43,50 @@ module.exports = (router) => {
 
     // Getting lists to edit the Character
 
-    // Epoch
+    //todo augmentation from bionics on creature
+    //todo weaponmods from weapons on creature
 
-    //todo armour
+    router.get('/:id/edit/armours', async (req, res, next) => {
+        try {
+            let [creature, data] = await armours(req, req.params.id);
 
-    //todo asset
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                armours: data
+            };
 
-    //todo bionic
-    //todo augmentation
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
 
-    //todo corporation
+    router.get('/:id/edit/assets', async (req, res, next) => {
+        try {
+            let [creature, data] = await assets(req, req.params.id);
 
-    //todo shield
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                assets: data
+            };
 
-    //todo weapon
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/augmentations', async (req, res, next) => {
+        try {
+            let [creature, data] = await augmentations(req, req.params.id);
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                augmentations: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
 
     router.get('/:id/edit/backgrounds', async (req, res, next) => {
         try {
@@ -66,9 +102,23 @@ module.exports = (router) => {
         } catch(e) { next(e); }
     });
 
+    router.get('/:id/edit/bionics', async (req, res, next) => {
+        try {
+            let [creature, data] = await bionics(req, req.params.id);
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                bionics: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
     router.get('/:id/edit/corporation', async (req, res, next) => {
         try {
-            let [creature, data] = await getData(req, req.params.id, 'epoch', 'corporation');
+            let [creature, data] = await defaults.getData(req, req.params.id, 'epoch', 'corporation');
 
             let result = {
                 user: await generic.user(req),
@@ -82,7 +132,7 @@ module.exports = (router) => {
 
     router.get('/:id/edit/country', async (req, res, next) => {
         try {
-            let [creature, data] = await getData(req, req.params.id, 'epoch', 'country');
+            let [creature, data] = await defaults.getData(req, req.params.id, 'epoch', 'country');
 
             let result = {
                 user: await generic.user(req),
@@ -124,7 +174,7 @@ module.exports = (router) => {
 
     router.get('/:id/edit/identity', async (req, res, next) => {
         try {
-            let [creature, data] = await getData(req, req.params.id, 'epoch', 'identity');
+            let [creature, data] = await defaults.getData(req, req.params.id, 'epoch', 'identity');
 
             let result = {
                 user: await generic.user(req),
@@ -180,12 +230,26 @@ module.exports = (router) => {
 
     router.get('/:id/edit/nature', async (req, res, next) => {
         try {
-            let [creature, data] = await getData(req, req.params.id, 'epoch', 'nature');
+            let [creature, data] = await defaults.getData(req, req.params.id, 'epoch', 'nature');
 
             let result = {
                 user: await generic.user(req),
                 creature: creature,
                 natures: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/shields', async (req, res, next) => {
+        try {
+            let [creature, data] = await shields(req, req.params.id);
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                shields: data
             };
 
             res.status(200).send(result);
@@ -208,7 +272,7 @@ module.exports = (router) => {
 
     router.get('/:id/edit/software', async (req, res, next) => {
         try {
-            let [creature, data] = await getData(req, req.params.id, 'epoch', 'software');
+            let [creature, data] = await defaults.getData(req, req.params.id, 'epoch', 'software');
 
             let result = {
                 user: await generic.user(req),
@@ -222,12 +286,26 @@ module.exports = (router) => {
 
     router.get('/:id/edit/wealth', async (req, res, next) => {
         try {
-            let [creature, data] = await getData(req, req.params.id, 'epoch', 'wealth');
+            let [creature, data] = await defaults.getData(req, req.params.id, 'epoch', 'wealth');
 
             let result = {
                 user: await generic.user(req),
                 creature: creature,
                 wealth: data
+            };
+
+            res.status(200).send(result);
+        } catch(e) { next(e); }
+    });
+
+    router.get('/:id/edit/weapons', async (req, res, next) => {
+        try {
+            let [creature, data] = await weapons(req, req.params.id);
+
+            let result = {
+                user: await generic.user(req),
+                creature: creature,
+                weapons: data
             };
 
             res.status(200).send(result);

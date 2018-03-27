@@ -2,6 +2,8 @@
 
 const request = require('../lib/request');
 const utilities = require('../lib/utilities');
+const config = require('../app/initializers/config');
+const getSchema = require('../app/initializers/schema').get;
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PUBLIC
@@ -62,19 +64,18 @@ async function id(req, route, id) {
     let model = {};
 
     try {
-        let plural = await request.get(req, '/system/config/plural');
-        let schema = await request.get(req, slashRoute + '/schema');
+        const singular = config.singular(route);
+        const hasMany = getSchema(singular).tables.hasMany;
 
-        let modelName = utilities.getSingleFromPlural(route, plural);
         let item = await request.single(req, slashRoute + '/' + id);
 
         item = utilities.splitUnderscoreInItem(item);
 
-        model[modelName] = item;
+        model[singular] = item;
 
-        for (let i in schema.tables.hasMany) {
-            let relation = schema.tables.hasMany[i];
-            let relationRoute = plural[relation];
+        for (let i in hasMany) {
+            let relation = hasMany[i];
+            let relationRoute = config.get('plural')[relation];
 
             model[relationRoute] = await request.multiple(req, '/' + route + '/' + id + '/' + relationRoute);
         }

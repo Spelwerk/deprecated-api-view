@@ -16,7 +16,7 @@ module.exports = async (req, id) => {
 
     let data = await defaults.getDataFromDefault(req, creature, from, relation);
 
-    const speciesData = await defaults.getDataFromRelation(req, creature, from, relation, 'species');
+    const speciesData = await defaults.getDataFilteredSpecies(req, creature, from, relation);
 
     data = utilities.mergeArraysOnUniqueId(data, speciesData);
 

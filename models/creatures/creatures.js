@@ -4,6 +4,8 @@ const request = require('../../lib/request');
 const generic = require('../generic');
 const utilities = require('../../lib/utilities');
 const weapons = require('../../lib/creatures/weapons');
+const config = require('../../app/initializers/config');
+const getSchema = require('../../app/initializers/schema').get;
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PRIVATE
@@ -13,8 +15,7 @@ async function getList(req, id, listRoute) {
     let data = await request.multiple(req, '/creatures/' + id + '/' + listRoute);
 
     if (data.length > 0) {
-        const schema = await request.get(req, '/' + listRoute + '/schema');
-        const hasMany = schema.tables.hasMany;
+        const hasMany = getSchema(config.singular(listRoute)).tables.hasMany;
 
         for (let i in data) {
             let item = data[i];
@@ -61,9 +62,12 @@ async function getBionics(req, id) {
 
             bionic = utilities.splitUnderscoreInItem(bionic);
 
+            // Generic
             bionic.attributes = await request.multiple(req, '/bionics/' + bionic.id + '/attributes');
             bionic.skills = await request.multiple(req, '/bionics/' + bionic.id + '/skills');
-            bionic.augmentations = await request.multiple(req, '/bionics/' + bionic.id + '/augmentations');
+
+            // Creature Specific
+            bionic.augmentations = await request.multiple(req, '/creatures/' + id + '/bionics/' + bionic.id + '/augmentations');
 
             let augmentations = bionic.augmentations;
 
@@ -95,7 +99,7 @@ async function getRelations(req, id) {
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function calculatePoints(req, model) {
-    let config = await request.get(req, '/system/config/points');
+    let configuration = config.get('points');
     let age = model.main.age;
 
     /*
@@ -127,12 +131,12 @@ async function calculatePoints(req, model) {
     positive value means we want to add that many to creature
      */
 
-    let milestone = config.baseline.milestone + utilities.minMax(age / config.divide.milestone, 1, config.maximum.milestone);
+    let milestone = configuration.baseline.milestone + utilities.minMax(age / configuration.divide.milestone, 1, configuration.maximum.milestone);
 
     model.missing = {
-        gift: config.baseline.gift - model.gifts.length,
-        imperfection: config.baseline.imperfection - model.imperfections.length,
-        background: config.baseline.background - model.backgrounds.length,
+        gift: configuration.baseline.gift - model.gifts.length,
+        imperfection: configuration.baseline.imperfection - model.imperfections.length,
+        background: configuration.baseline.background - model.backgrounds.length,
         milestone: milestone - model.milestones.length,
     };
 
@@ -141,19 +145,19 @@ async function calculatePoints(req, model) {
      */
 
     let points = {
-        skill: config.baseline.skill * speciesMultiplier,
-        expertise: config.baseline.expertise * speciesMultiplier,
-        primal: config.baseline.primal * speciesMultiplier,
-        spell: config.baseline.spell * speciesMultiplier,
+        skill: configuration.baseline.skill * speciesMultiplier,
+        expertise: configuration.baseline.expertise * speciesMultiplier,
+        primal: configuration.baseline.primal * speciesMultiplier,
+        spell: configuration.baseline.spell * speciesMultiplier,
 
-        language: config.baseline.language * config.cost.language,
-        form: config.baseline.form * config.cost.form,
+        language: configuration.baseline.language * configuration.cost.language,
+        form: configuration.baseline.form * configuration.cost.form,
     };
 
-    points.expertise = utilities.minMax(points.expertise + (age / config.divide.expertise), 1, config.maximum.expertise);
-    points.primal = utilities.minMax(points.primal + (age / config.divide.primal), 1, config.maximum.primal);
-    points.skill = utilities.minMax(points.skill + (age / config.divide.skill), 1, config.maximum.skill);
-    points.spell = utilities.minMax(points.spell + (age / config.divide.spell), 1, config.maximum.spell);
+    points.expertise = utilities.minMax(points.expertise + (age / configuration.divide.expertise), 1, configuration.maximum.expertise);
+    points.primal = utilities.minMax(points.primal + (age / configuration.divide.primal), 1, configuration.maximum.primal);
+    points.skill = utilities.minMax(points.skill + (age / configuration.divide.skill), 1, configuration.maximum.skill);
+    points.spell = utilities.minMax(points.spell + (age / configuration.divide.spell), 1, configuration.maximum.spell);
 
     model.points = {
         skill: points.skill,
@@ -161,8 +165,8 @@ async function calculatePoints(req, model) {
         primal: points.primal,
         spell: points.spell,
 
-        language: points.language - (model.languages.length * config.cost.language),
-        form: points.form - (model.forms.length * config.cost.form),
+        language: points.language - (model.languages.length * configuration.cost.language),
+        form: points.form - (model.forms.length * configuration.cost.form),
     };
 
     // Expertise Additive calculation
@@ -201,8 +205,7 @@ async function calculatePoints(req, model) {
 }
 
 async function calculateExperience(req, model) {
-    let config = await request.get(req, '/system/config/attributes');
-    let id = config.experience;
+    let id = config.get('attributes').experience;
 
     let key;
     for (let i in model.attributes) {
@@ -220,8 +223,7 @@ async function calculateExperience(req, model) {
 }
 
 async function calculateWounds(req, model) {
-    let config = await request.get(req, '/system/config/attributes');
-    let wounds = config.wounds;
+    let wounds = config.get('attributes').wounds;
 
     for (let i in wounds) {
         let id = wounds[i];
@@ -560,7 +562,7 @@ async function id(req, id) {
 
         // Relations
         loyalties: await getList(req, id, 'loyalties'),
-        relations: await getRelations(req, id),
+        //relations: await getRelations(req, id),
 
         // Wounds
         dementations: await request.multiple(req, route + '/dementations'),

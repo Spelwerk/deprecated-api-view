@@ -27,6 +27,10 @@ async function main() {
 
         require('./app/initializers/log')(app);
 
+        await require('./app/initializers/schema').setup();
+
+        await require('./app/initializers/config').setup();
+
         await require('./app/initializers/routes')(app);
 
         require('./app/initializers/errors')(app);

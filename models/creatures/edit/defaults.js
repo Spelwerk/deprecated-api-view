@@ -3,13 +3,13 @@
 const request = require('../../../lib/request');
 const creatures = require('../creatures');
 const utilities = require('../../../lib/utilities');
+const plural = require('../../../app/initializers/config').get('plural');
 
 // ////////////////////////////////////////////////////////////////////////////////// //
 // PUBLIC
 // ////////////////////////////////////////////////////////////////////////////////// //
 
 async function getData(req, id, from, relation) {
-    const plural = await request.get(req, '/system/config/plural');
     const creature = await creatures.id(req, id);
 
     let data = await request.multiple(req, '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation]);
@@ -21,14 +21,10 @@ async function getData(req, id, from, relation) {
 }
 
 async function getDataFromDefault(req, creature, from, relation) {
-    const plural = await request.get(req, '/system/config/plural');
-    const route = '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation];
-
-    return await request.multiple(req, route + '/default');
+    return await request.multiple(req, '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation] + '/default');
 }
 
 async function getDataFromRelation(req, creature, fromBase, fromRelation, dataRelation) {
-    const plural = await request.get(req, '/system/config/plural');
     const route = '/' + plural[fromBase] + '/' + creature[fromBase].id + '/' + plural[fromRelation];
 
     let data = [];
@@ -44,18 +40,54 @@ async function getDataFromRelation(req, creature, fromBase, fromRelation, dataRe
             }
         }
     } else {
-        data = await request.multiple(req, route + '/species/' + creature.species.id);
+        data = await request.multiple(req, route + '/' + dataRelation + '/' + creature.species.id);
     }
 
     return data;
 }
 
-async function getDataForMultiple(req, id, from, relation) {
-    let data = await getData(req, id, from, relation);
+// ////////////////////////////////////////////////////////////////////////////////// //
+
+async function getDataFilteredBackground(req, creature, from, relation) {
+    const route = '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation] + '/background/';
+
+    let data = [];
+
+    for (let i in creature.backgrounds) {
+        const id = creature.backgrounds[i].id;
+
+        let results = await request.multiple(req, route + id);
+
+        for (let n in results) {
+            data.push(results[n]);
+        }
+    }
+
+    return data;
 }
 
-async function getDataForSingle(req, id, from, relation) {
+async function getDataFilteredManifestation(req, creature, from, relation) {
+    const route = '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation] + '/manifestation/';
 
+    let data = [];
+
+    for (let i in creature.manifestations) {
+        const id = creature.manifestations[i].id;
+
+        let results = await request.multiple(req, route + id);
+
+        for (let n in results) {
+            data.push(results[n]);
+        }
+    }
+
+    return data;
+}
+
+async function getDataFilteredSpecies(req, creature, from, relation) {
+    const route = '/' + plural[from] + '/' + creature[from].id + '/' + plural[relation] + '/species/';
+
+    return await request.multiple(req, route + creature.species.id);
 }
 
 // ////////////////////////////////////////////////////////////////////////////////// //
@@ -65,5 +97,7 @@ async function getDataForSingle(req, id, from, relation) {
 module.exports.getData = getData;
 module.exports.getDataFromDefault = getDataFromDefault;
 module.exports.getDataFromRelation = getDataFromRelation;
-module.exports.getDataForMultiple = getDataForMultiple;
-module.exports.getDataForSingle = getDataForSingle;
+
+module.exports.getDataFilteredBackground = getDataFilteredBackground;
+module.exports.getDataFilteredManifestation = getDataFilteredManifestation;
+module.exports.getDataFilteredSpecies = getDataFilteredSpecies;
